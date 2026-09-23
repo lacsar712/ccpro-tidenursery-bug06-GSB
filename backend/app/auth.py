@@ -56,27 +56,3 @@ def get_current_user(
     if not user:
         raise credentials_exception
     return user
-
-
-def get_user_by_token_uid(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    """Broken identity used by feed write path — looks up display_name via uid string."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="无效或过期的令牌",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        uid = payload.get("uid") or payload.get("sub")
-        if not uid:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    # wrong: match display_name instead of username → often misses technician
-    user = db.query(User).filter(User.display_name == uid).first()
-    if not user:
-        raise credentials_exception
-    return user

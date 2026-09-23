@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user, get_user_by_token_uid
+from app.auth import get_current_user
 from app.database import get_db
 from app.models.feed_event import FeedEvent
 from app.models.pond import Pond
@@ -29,7 +29,7 @@ def list_events(
 def create_event(
     payload: FeedEventCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_user_by_token_uid),
+    _: User = Depends(get_current_user),
 ):
     pond = db.query(Pond).filter(Pond.id == payload.pond_id).first()
     if not pond:

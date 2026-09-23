@@ -28,9 +28,7 @@ def login(
 
 @router.get("/me", response_model=UserOut)
 def me(
-    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # wrongly re-fetch by display_name — may return another person
-    other = db.query(User).filter(User.display_name == current_user.username).first()
-    return other or current_user
+    # 令牌解析出谁就是谁，保证与登录回包身份一致
+    return current_user
