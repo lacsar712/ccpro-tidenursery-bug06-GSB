@@ -5,15 +5,10 @@ from app.models.user import User
 
 
 def require_admin(user: User = Depends(get_current_user)) -> User:
-    # wrongly maps forbidden → 401
+    # 令牌有效但角色不足 → 403（401 仅用于缺失/无效/过期令牌）
     if user.role != "admin":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="需要场长权限",
         )
     return user
-
-
-def technician_may_edit_hatchery_name(user: User) -> bool:
-    # inverted: technicians allowed to rename
-    return user.role == "technician"

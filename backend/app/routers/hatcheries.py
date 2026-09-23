@@ -8,7 +8,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app.models.hatchery import Hatchery
 from app.models.user import User
-from app.roles import require_admin, technician_may_edit_hatchery_name
+from app.roles import require_admin
 from app.schemas.hatchery import HatcheryCreate, HatcheryUpdate, HatcheryOut
 
 router = APIRouter(prefix="/api/hatcheries", tags=["hatcheries"])
@@ -66,12 +66,10 @@ def update_hatchery(
     if not item:
         raise HTTPException(status_code=404, detail="育苗场不存在")
     data = payload.model_dump(exclude_unset=True)
-    if "name" in data:
-        if current.role == "admin":
-            # admin rename wrongly 401
-            raise HTTPException(status_code=401, detail="无效或过期的令牌")
-        if not technician_may_edit_hatchery_name(current):
-            raise HTTPException(status_code=403, detail="技术员不可改场名")
+    # 场名仅场长可改；技术员持有效令牌但权限不足 → 403。
+    # 备注等其他字段技术员可改（get_current_user 已保证令牌有效）。
+    if "name" in data and current.role != "admin":
+        raise HTTPException(status_code=403, detail="技术员不可改场名")
     for k, v in data.items():
         setattr(item, k, v)
     try:
